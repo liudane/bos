@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:task="http://www.springframework.org/schema/task" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:jaxws="http://cxf.apache.org/jaxws"
+       xsi:schemaLocation="
+						http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+						http://www.springframework.org/schema/data/jpa
+						http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+						http://cxf.apache.org/jaxws
+						http://cxf.apache.org/schemas/jaxws.xsd">
+
+
+    <!-- 过滤器工厂 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!-- 注入安全管理器 -->
+        <property name="securityManager" ref="securityManager"></property>
+
+        <!-- 注入一些页面
+
+            private String loginUrl;访问url要求当前用户必须登陆以后才可以访问，如果没有登陆，框架会跳转到登陆页面
+            private String successUrl;
+            private String unauthorizedUrl;访问URL要求当前用户必须有相应的权限，如果没有对应的权限，框架会跳到权限不足页面
+
+        -->
+        <property name="loginUrl" value="/login.jsp"></property>
+        <property name="unauthorizedUrl" value="/unauthorized.jsp"></property>
+
+        <!-- 配置项目中URL对应的拦截规则：注意过滤器顺序
+            等号左边是URL请求：/** 表示项目所有的URL
+            等号右边是过滤器： 过滤器的简称
+            /** = authc ：认证过滤器：访问所有的URL 当前的用户必须被认证后才能访问
+                    anon：匿名过滤器；不需要用户认证，不需要权限就可以访问
+                    perms：权限过滤器（认证通过是前提，验证用户是否有权限）访问某个URL，需要当前用户必须有某个权限点
+                    roles：角色过滤器
+          -->
+        <!-- filterChainDefinitions 过滤器链，严格要求权限顺序 -->
+        <property name="filterChainDefinitions">
+            <value>
+                /login.jsp = anon
+                /css/** = anon
+                /js/** = anon
+                /images/** = anon
+                /validatecode.jsp** = anon
+                /userAction_login.action = anon
+                /pages/base/standard.jsp = perms["standard_page"]
+                /pages/base/courier.jsp = roles ["admin"]
+                /courierAction_delete.action* = perms["courier_delete"]
+                /** = authc
+            </value>
+        </property>
+    </bean>
+    <!-- 配置安全管理器：shiro框架的核心 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!-- 注入realm：安全管理器调用realm完成认证和授权 -->
+        <property name="realm" ref="bosRealm"></property>
+    </bean>
+
+    <!-- 开启shiro注解支持：识别shiro注解 -->
+    <!-- 扫描到shiro注解后，默认采用自动代理：根据interfact，class自动选择代理技术
+        有接口的情况：使用jdk动态代理，针对接口产生实现类对象
+        没有接口的情况：使用CGLib，针对该类产生代理对象；
+        CGLib对有和没有接口两种情况都可以用
+    -->
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator">
+        <!-- shiro框架注解，必须使用CGLib方式产生代理对象，如果是jdk动态代理，service对象创建出来会是null -->
+        <property name="proxyTargetClass" value="true"></property>
+   </bean>
+
+    <!--配置切面：通知+切入点-->
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor"></bean>
+
+</beans>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
